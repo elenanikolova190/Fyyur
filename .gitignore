@@ -1,2 +1,7 @@
-# Environment vars
+# Environments and config vars
 .env
+env/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
