@@ -11,8 +11,10 @@ from flask_sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
+from sqlalchemy import Column, ForeignKey, Integer
 from forms import *
 from flask_migrate import Migrate
+from datetime import datetime
 
 #----------------------------------------------------------------------------#
 # App Config.
@@ -88,6 +90,16 @@ class Venue_Genre(db.Model):
 
     def __repr__(self):
         return f'<Venue_Genre venue_id:{self.venue_id} genre: {self.genre}>'
+
+class Show(db.Model):
+    __tablename__ = 'shows'
+    id = db.Column(db.Integer, primary_key=True)
+    venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), nullable=False)
+    artist_id = db.Column(db.Integer, db.ForeignKey('artist.id'), nullable=False)
+    start_time = db.Column(db.DateTime, nullable=False)
+
+    def __repr__(self):
+      return f'<Shows show_id: {self.id} venue_id: {self.venue_id} artist_id: {self.artist_id} start_time: {self.start_time} >'
 
 #----------------------------------------------------------------------------#
 # Filters.
