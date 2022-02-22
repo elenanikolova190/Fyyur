@@ -48,6 +48,8 @@ class Venue(db.Model):
     website_link = db.Column(db.String(300))
     seeking_talent = db.Column(db.Boolean, nullable=False, default=False)
     seeking_description = db.Column(db.String())
+    shows = db.relationship('Show',backref='venue',lazy=True,
+                        cascade="save-update, merge, delete")
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -65,6 +67,8 @@ class Artist(db.Model):
     facebook_link = db.Column(db.String(120))
     seeking_venue = db.Column(db.Boolean, nullable=True, default=False)
     seeking_description = db.Column(db.String(), nullable=True, default="")
+    shows = db.relationship('Show',backref='artist',lazy=True,
+                        cascade="save-update, merge, delete")
 
     def __repr__(self):
         return f'<Artists ID:{self.id}, name: {self.name}, city: {self.city}>'
@@ -91,15 +95,17 @@ class Venue_Genre(db.Model):
     def __repr__(self):
         return f'<Venue_Genre venue_id:{self.venue_id} genre: {self.genre}>'
 
+
 class Show(db.Model):
     __tablename__ = 'shows'
     id = db.Column(db.Integer, primary_key=True)
     venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), nullable=False)
-    artist_id = db.Column(db.Integer, db.ForeignKey('artist.id'), nullable=False)
+    artist_id = db.Column(db.Integer, db.ForeignKey(
+        'artist.id'), nullable=False)
     start_time = db.Column(db.DateTime, nullable=False)
 
     def __repr__(self):
-      return f'<Shows show_id: {self.id} venue_id: {self.venue_id} artist_id: {self.artist_id} start_time: {self.start_time} >'
+        return f'<Shows show_id: {self.id} venue_id: {self.venue_id} artist_id: {self.artist_id} start_time: {self.start_time} >'
 
 #----------------------------------------------------------------------------#
 # Filters.
@@ -607,15 +613,31 @@ def create_shows():
 
 @app.route('/shows/create', methods=['POST'])
 def create_show_submission():
-    # called to create new shows in the db, upon submitting new show listing form
-    # TODO: insert form data as a new Show record in the db, instead
+    try:
+        artist_id = request.form.get("artist_id")
+        venue_id = request.form.get("venue_id")
+        start_time = request.form.get("start_time")
 
-    # on successful db insert, flash success
-    flash('Show was successfully listed!')
-    # TODO: on unsuccessful db insert, flash an error instead.
-    # e.g., flash('An error occurred. Show could not be listed.')
-    # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
-    return render_template('pages/home.html')
+        new_show = Show(
+            artist_id=artist_id, venue_id=venue_id, start_time=start_time
+        )
+
+        db.session.add(new_show)
+        db.session.commit()
+
+        db.session.refresh(new_show)
+        flash("The show was successfully listed!")
+
+    except:
+        db.session.rollback()
+        print(sys.exc_info())
+        flash(
+            "An error occurred. The show have not be listed."
+        )
+
+    finally:
+        db.session.close()
+        return render_template("pages/home.html")
 
 
 @app.errorhandler(404)
