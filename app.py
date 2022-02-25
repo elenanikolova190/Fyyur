@@ -12,11 +12,13 @@ from flask_sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
-from sqlalchemy import Column, ForeignKey, Integer
+from sqlalchemy import distinct
 from forms import *
 from flask_migrate import Migrate
 from datetime import datetime
 from models import Venue, Artist, Artist_Genre, Venue_Genre, Show
+from sqlalchemy.orm import load_only
+
 
 #----------------------------------------------------------------------------#
 # App Config.
@@ -32,6 +34,7 @@ migrate = Migrate(app, db)
 #----------------------------------------------------------------------------#
 # Filters.
 #----------------------------------------------------------------------------#
+
 
 def format_datetime(value, format='medium'):
     date = dateutil.parser.parse(value)
@@ -59,39 +62,42 @@ def index():
 
 @app.route('/venues')
 def venues():
-    # TODO: replace with real venues data.
-    #       num_upcoming_shows should be aggregated based on number of upcoming shows per venue.
-    #venues_data = db.session.query(Venue).all()
+    data = []
 
-    # return render_template("pages/venues.html", areas=venues_data)
-    # SELECT v.city AS city, v.state AS state, v.id, v.name, SUM(s.upcoming_shows) num_upcoming_shows
-    # FROM venue v
-    # JOIN shows s
-    # ON s.id = s.venue_id
-    # GROUP BY v.city;
+    try:
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%S:%M')
+        city_state = db.session.query(distinct(Venue.city), Venue.state).all()
 
-    data = [{
-        "city": "San Francisco",
-        "state": "CA",
-        "venues": [{
-            "id": 1,
-            "name": "The Musical Hop",
-            "num_upcoming_shows": 0,
-        }, {
-            "id": 3,
-            "name": "Park Square Live Music & Coffee",
-            "num_upcoming_shows": 1,
-        }]
-    }, {
-        "city": "New York",
-        "state": "NY",
-        "venues": [{
-            "id": 2,
-            "name": "The Dueling Pianos Bar",
-            "num_upcoming_shows": 0,
-        }]
-    }]
-    return render_template('pages/venues.html', areas=data)
+        for location in city_state:
+            city = location[0]
+            state = location[1]
+
+            city_data = {"city": city, "state": state, "venues": []}
+
+            venues = Venue.query.filter_by(city=city, state=state).all()
+
+            for venue in venues:
+                upcoming_shows = len(Show.query.filter(Show.venue_id == venue.id).filter(
+                    Show.start_time > current_time).all())
+
+                venue_data = {
+                    "id": venue.id,
+                    "name": venue.name,
+                    "num_upcoming_shows": upcoming_shows,
+                }
+
+                city_data["venues"].append(venue_data)
+
+            data.append(city_data)
+    except:
+        db.session.rollback()
+        print(sys.exc_info())
+        flash("Something went wrong. Please try again.")
+        return render_template("pages/home.html")
+
+    finally:
+        db.session.close()
+        return render_template("pages/venues.html", areas=data)
 
 
 @app.route('/venues/search', methods=['POST'])
@@ -267,8 +273,8 @@ def delete_venue(venue_id):
 
 @app.route('/artists')
 def artists():
-    #fields = ["id", "name"]
-    artists_data = db.session.query(Artist).all()
+    fields = ["id", "name"]
+    artists_data = db.session.query(Artist).options(load_only(*fields)).all()
 
     return render_template("pages/artists.html", artists=artists_data)
 
