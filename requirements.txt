@@ -7,3 +7,4 @@ python-dotenv==0.19.2
 Flask-Migrate==3.1.0
 Mako==1.1.6
 alembic==1.7.6
+virtualenv==16.7.5
