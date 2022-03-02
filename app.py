@@ -64,7 +64,6 @@ def index():
 @app.route('/venues')
 def venues():
     data = []
-
     try:
         current_time = datetime.now()  # .strftime('%Y-%m-%d %H:%S:%M')
         city_state = db.session.query(distinct(Venue.city), Venue.state).all()
@@ -84,7 +83,6 @@ def venues():
                     "name": venue.name,
                     "num_upcoming_shows": upcoming_shows,
                 }
-
                 city_data["venues"].append(venue_data)
             data.append(city_data)
     except:
@@ -100,28 +98,34 @@ def venues():
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
-    # TODO: implement search on venues with partial string search. Ensure it is case-insensitive.
-    # seach for Hop should return "The Musical Hop".
-    # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
+    # Implements search on venues with partial string search. Case-insensitive.
+
+    search = request.form['search_term']
+    venues = Venue.query.filter(Venue.name.ilike(f'%{search}%'))
+    venue_list = []
+    for venue in venues:
+        item = {
+            "id": venue.id,
+            "name": venue.name,
+            "num_upcoming_shows": len(Show.query.filter(Show.venue_id == venue.id).filter(
+                Show.start_time > datetime.now()).all())
+        }
+        venue_list.append(item)
+    
     response = {
-        "count": 1,
-        "data": [{
-            "id": 2,
-            "name": "The Dueling Pianos Bar",
-            "num_upcoming_shows": 0,
-        }]
+        "count":len(venue_list),
+        "data": venue_list
     }
+
     return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
 
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
     # shows the venue page with the given venue_id
-    # TODO: replace with real venue data from the venues table, using venue_id
 
     data = {}
     try:
-        # datetime.now().strftime('%Y-%m-%d %H:%S:%M')
         current_time = datetime.now()
         venue = Venue.query.get(venue_id)
 
@@ -269,17 +273,25 @@ def artists():
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
-    # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-    # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
-    # search for "band" should return "The Wild Sax Band".
+    # Implements search on artists with partial string search. 
+
+    search = request.form['search_term']
+    artists = Artist.query.filter(Artist.name.ilike(f'%{search}%'))
+    artist_list = []
+    for artist in artists:
+        item = {
+            "id": artist.id,
+            "name": artist.name,
+            "num_upcoming_shows": len(Show.query.filter(Show.artist_id == artist.id).filter(
+                Show.start_time > datetime.now()).all())
+        }
+        artist_list.append(item)
+    
     response = {
-        "count": 1,
-        "data": [{
-            "id": 4,
-            "name": "Guns N Petals",
-            "num_upcoming_shows": 0,
-        }]
+        "count":len(artist_list),
+        "data": artist_list
     }
+
     return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
 
 
@@ -463,10 +475,8 @@ def create_artist_submission():
 @app.route('/shows')
 def shows():
     # displays list of shows at /shows
-    # TODO: replace with real venues data.
 
     data = []
-
     try:
         shows = db.session.query(Show).all()
 
