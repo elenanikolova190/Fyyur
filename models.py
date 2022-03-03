@@ -1,6 +1,15 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Column, String, Integer, Boolean, DateTime, ARRAY, ForeignKey
+from flask_migrate import Migrate
 
 db = SQLAlchemy()
+
+def db_setup(app):
+    app.config.from_object('config')
+    db.app = app
+    db.init_app(app)
+    migrate = Migrate(app, db)
+    return db
 
 #----------------------------------------------------------------------------#
 # Models.
@@ -16,15 +25,14 @@ class Venue(db.Model):
     state = db.Column(db.String(120), nullable=False)
     address = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(120), nullable=False)
-    genres = db.relationship('Venue_Genre', backref='venue', lazy=True, cascade="save-update, merge, delete")
-    #genres = db.Column(db.ARRAY(db.String))
+    genres = db.Column(db.ARRAY(db.String))
     image_link = db.Column(db.String())
     facebook_link = db.Column(db.String(120))
     website = db.Column(db.String(300))
     seeking_talent = db.Column(db.Boolean, nullable=False, default=False)
     seeking_description = db.Column(db.String())
     shows = db.relationship('Show', backref='venue', lazy=True,
-                            cascade="save-update, merge, delete")
+                            cascade="all, delete-orphan")
 
 
 class Artist(db.Model):
@@ -35,7 +43,7 @@ class Artist(db.Model):
     city = db.Column(db.String(120), nullable=False)
     state = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(120), nullable=False)
-    genres = db.relationship("Artist_Genre", backref="artist", lazy=True, cascade="all, delete-orphan")
+    genres = db.Column(db.ARRAY(db.String))
     website = db.Column(db.String(240), nullable=True)
     image_link = db.Column(db.String(1000),
                            nullable=True, default='https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60',)
@@ -48,29 +56,6 @@ class Artist(db.Model):
 
     def __repr__(self):
         return f'<Artists ID:{self.id}, name: {self.name}, city: {self.city}>'
-
-
-class Artist_Genre(db.Model):
-    __tablename__ = 'artist_genres'
-    id = db.Column(db.Integer, primary_key=True)
-    artist_id = db.Column(db.Integer, db.ForeignKey(
-        'artist.id'), nullable=False)
-    genre = db.Column(db.String(50), nullable=False)
-
-    def __repr__(self):
-        return f'<Artist_Genre artist_id:{self.artist_id} genre: {self.genre}>'
-
-
-class Venue_Genre(db.Model):
-    __tablename__ = 'venue_genres'
-    id = db.Column(db.Integer, primary_key=True)
-    venue_id = db.Column(db.Integer, db.ForeignKey(
-        'venue.id'), nullable=False)
-    genre = db.Column(db.String(50), nullable=False)
-
-    def __repr__(self):
-        return f'<Venue_Genre venue_id:{self.venue_id} genre: {self.genre}>'
-
 
 class Show(db.Model):
     __tablename__ = 'shows'
