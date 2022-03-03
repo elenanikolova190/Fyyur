@@ -16,7 +16,8 @@ class Venue(db.Model):
     state = db.Column(db.String(120), nullable=False)
     address = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(120), nullable=False)
-    genres = db.relationship('Venue_Genre', backref='venue', lazy=True)
+    genres = db.relationship('Venue_Genre', backref='venue', lazy=True, cascade="save-update, merge, delete")
+    #genres = db.Column(db.ARRAY(db.String))
     image_link = db.Column(db.String())
     facebook_link = db.Column(db.String(120))
     website = db.Column(db.String(300))
@@ -34,7 +35,7 @@ class Artist(db.Model):
     city = db.Column(db.String(120), nullable=False)
     state = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(120), nullable=False)
-    genres = db.relationship("Artist_Genre", backref="artist", lazy=True)
+    genres = db.relationship("Artist_Genre", backref="artist", lazy=True, cascade="all, delete-orphan")
     website = db.Column(db.String(240), nullable=True)
     image_link = db.Column(db.String(1000),
                            nullable=True, default='https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60',)
@@ -43,7 +44,7 @@ class Artist(db.Model):
     seeking_venue = db.Column(db.Boolean, nullable=True, default=False)
     seeking_description = db.Column(db.String(), nullable=True, default="")
     shows = db.relationship('Show', backref='artist',
-                            lazy=True, cascade="save-update, merge, delete")
+                            lazy=True, cascade="all, delete-orphan")
 
     def __repr__(self):
         return f'<Artists ID:{self.id}, name: {self.name}, city: {self.city}>'
