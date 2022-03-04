@@ -26,13 +26,13 @@ class Venue(db.Model):
     address = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(120), nullable=False)
     genres = db.Column(db.ARRAY(db.String))
-    image_link = db.Column(db.String())
+    image_link = db.Column(db.String(), nullable=True, default="https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60")
     facebook_link = db.Column(db.String(120))
     website = db.Column(db.String(300))
     seeking_talent = db.Column(db.Boolean, nullable=False, default=False)
     seeking_description = db.Column(db.String())
     shows = db.relationship('Show', backref='venue', lazy=True,
-                            cascade="all, delete-orphan")
+                            cascade="all, delete")
 
 
 class Artist(db.Model):
@@ -52,7 +52,7 @@ class Artist(db.Model):
     seeking_venue = db.Column(db.Boolean, nullable=True, default=False)
     seeking_description = db.Column(db.String(), nullable=True, default="")
     shows = db.relationship('Show', backref='artist',
-                            lazy=True, cascade="all, delete-orphan")
+                            lazy=True)
 
     def __repr__(self):
         return f'<Artists ID:{self.id}, name: {self.name}, city: {self.city}>'
@@ -60,7 +60,7 @@ class Artist(db.Model):
 class Show(db.Model):
     __tablename__ = 'shows'
     id = db.Column(db.Integer, primary_key=True)
-    venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), nullable=False)
+    venue_id = db.Column(db.Integer, db.ForeignKey('venue.id', ondelete="CASCADE"), nullable=False)
     artist_id = db.Column(db.Integer, db.ForeignKey(
         'artist.id'), nullable=False)
     start_time = db.Column(db.DateTime, nullable=False)

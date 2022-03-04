@@ -141,7 +141,7 @@ def show_venue(venue_id):
                 "artist_name": artist.name,
                 "artist_image_link": artist.image_link,
                 "num_upcoming_shows": upcoming_shows_num,
-                "start_time": str(show.start_time)  # .strftime("%d/%m/%Y, %H:%M")
+                "start_time": str(show.start_time) 
             }
             if show.start_time > current_time:
                 upcoming_shows.append(show_data)
@@ -222,23 +222,18 @@ def create_venue_submission():
         return redirect(url_for("show_venue", venue_id=new_venue.id))
 
 
-@app.route('/venues/<venue_id>', methods=['DELETE'])
+@app.route('/venues/<venue_id>', methods=['POST'])
 def delete_venue(venue_id):
-    # TODO: Complete this endpoint for taking a venue_id, and using
-    # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
     try:
-        Venue.query.filter_by(id=venue_id).delete()
+        venue = Venue.query.filter_by(id=venue_id).first_or_404()
+        db.session.delete(venue)
         db.session.commit()
-    except:
-        db.session.rollback()
-        print(sys.exc_info())
-    finally:
-        db.session.close()
-        return render_template("pages/home.html")
+        flash('The venue has been removed together with all of its shows.')
+        return render_template('pages/home.html')
+    except ValueError:
+        flash('It was not possible to delete this Venue')
+    return redirect(url_for('venues'))
 
-    # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
-    # clicking that button delete it from the db then redirect the user to the homepage
-    #  return None
 
 #  Artists
 #  ----------------------------------------------------------------
@@ -522,7 +517,7 @@ def shows():
 
     data = []
     try:
-        shows = db.session.query(Show).all()
+        shows = db.session.query(Show).order_by(Show.start_time.asc()).all()
 
         for show in shows:
             artist = Artist.query.get(show.artist_id)
