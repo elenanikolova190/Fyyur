@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, ARRAY, ForeignKey
+from sqlalchemy import Column, String, Integer, Boolean, DateTime, ARRAY, ForeignKey, UniqueConstraint
 from flask_migrate import Migrate
 
 db = SQLAlchemy()
@@ -25,14 +25,15 @@ class Venue(db.Model):
     state = db.Column(db.String(120), nullable=False)
     address = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(120), nullable=False)
-    genres = db.Column(db.ARRAY(db.String))
+    genres = db.Column(db.ARRAY(db.String), nullable=False)
     image_link = db.Column(db.String(), nullable=True, default="https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60")
     facebook_link = db.Column(db.String(120))
     website = db.Column(db.String(300))
-    seeking_talent = db.Column(db.Boolean, nullable=False, default=False)
-    seeking_description = db.Column(db.String())
+    seeking_talent = db.Column(db.Boolean, nullable=True, default=False)
+    seeking_description = db.Column(db.String(500), nullable=True, default="")
     shows = db.relationship('Show', backref='venue', lazy=True,
-                            cascade="all, delete")
+                            cascade="delete")
+    UniqueConstraint(name)
 
 
 class Artist(db.Model):
@@ -43,16 +44,17 @@ class Artist(db.Model):
     city = db.Column(db.String(120), nullable=False)
     state = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(120), nullable=False)
-    genres = db.Column(db.ARRAY(db.String))
+    genres = db.Column(db.ARRAY(db.String), nullable=False)
     website = db.Column(db.String(240), nullable=True)
-    image_link = db.Column(db.String(1000),
+    image_link = db.Column(db.String(500),
                            nullable=True, default='https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60',)
     facebook_link = db.Column(db.String(120), nullable=True,
                               default='https://www.facebook.com/theduelingpianos')
     seeking_venue = db.Column(db.Boolean, nullable=True, default=False)
-    seeking_description = db.Column(db.String(), nullable=True, default="")
+    seeking_description = db.Column(db.String(500), nullable=True, default="")
     shows = db.relationship('Show', backref='artist',
                             lazy=True)
+    UniqueConstraint(name)
 
     def __repr__(self):
         return f'<Artists ID:{self.id}, name: {self.name}, city: {self.city}>'

@@ -95,7 +95,7 @@ def venues():
 def search_venues():
     # Implements search on venues with partial string search. Case-insensitive.
 
-    search = request.form['search_term']
+    search = request.form.get('search_term')
     venues = Venue.query.filter(Venue.name.ilike(f'%{search}%'))
     venue_list = []
     for venue in venues:
@@ -200,15 +200,15 @@ def create_venue_submission():
         image_link = request.form.get('image_link'),
         facebook_link = request.form.get('facebook_link'),
         website = request.form.get('website_link'),
-        seeking_talent = (request.form['seeking_talent'] == 'y'),
+        seeking_talent = (request.form.get("seeking_talent", False) == 'y'),
         seeking_description = request.form.get('seeking_description'),
       )
 
       db.session.add(new_venue)
       db.session.commit()
 
-      db.session.refresh(new_venue)
-      flash("Venue " + new_venue.name + " was successfully listed!")
+  #    db.session.refresh(new_venue)
+      flash("Venue " + request.form.get("name") + " was successfully listed!")
     except:
         db.session.rollback()
         print(sys.exc_info())
@@ -219,7 +219,7 @@ def create_venue_submission():
         )
     finally:
         db.session.close()
-        return redirect(url_for("show_venue", venue_id=new_venue.id))
+        return render_template('pages/home.html')
 
 
 @app.route('/venues/<venue_id>', methods=['POST'])
@@ -376,7 +376,7 @@ def edit_artist_submission(artist_id):
     artist.website = request.form.get('website')
     artist.facebook_link = request.form.get('facebook_link')
     artist.image_link = request.form.get('image_link')
-    artist.seeking_venue = (request.form['seeking_venue'] == 'y')
+    artist.seeking_venue = (request.form.get("seeking_venue", False) == 'y')
     artist.seeking_description = request.form.get('seeking_description')
         
     db.session.add(artist)
@@ -442,7 +442,7 @@ def edit_venue_submission(venue_id):
         venue.address = request.form.get("address")
         venue.phone = request.form.get("phone")
         venue.facebook_link = request.form.get("facebook_link")
-        venue.seeking_talent = (request.form["seeking_talent"] == 'y')
+        venue.seeking_talent = (request.form.get("seeking_talent", False) == 'y')
         venue.seeking_description = request.form.get("seeking_description")
         venue.image_link =  request.form.get("image_link")
 
@@ -485,14 +485,14 @@ def create_artist_submission():
             website = request.form.get("website"),
             image_link = request.form.get("website"),
             facebook_link=request.form.get("facebook_link"),
-            seeking_venue = (request.form['seeking_venue'] == 'y'),
+            seeking_venue = (request.form.get("seeking_venue") == 'y'),
             seeking_description = request.form.get("seeking_description"),
         )
         db.session.add(new_artist)
         db.session.commit()
 
         db.session.refresh(new_artist)
-        flash("Artist " + new_artist.name + " was successfully listed!")
+        flash("Artist " + request.form.get("name") + " was successfully listed!")
 
     except:
         db.session.rollback()
@@ -505,7 +505,7 @@ def create_artist_submission():
 
     finally:
         db.session.close()
-        return redirect(url_for('show_artist', artist_id=new_artist.id))
+        return render_template("pages/home.html")
 
 
 #  Shows
